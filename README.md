@@ -1,1 +1,1 @@
-# Project_Grp2_Knowledge_Graphs
+# Project_Grp2_KG
