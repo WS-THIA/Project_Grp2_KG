@@ -125,3 +125,9 @@ dmypy.json
 .pyre/
 
 .DS_Store
+data/*
+data_scraped/*
+data_processed/*
+*.json
+*.pkl
+*.zip
