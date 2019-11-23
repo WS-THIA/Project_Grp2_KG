@@ -18,10 +18,20 @@
     </form>
     <hr>
     <form method="post">
-       {{ form2.hidden_tag() }}
-      {{ form2.Gender }}
+      {{ form2.hidden_tag() }}
+      {{ form2.cuisine() }}
       {{ form2.submitRadio() }}
     </form>
+    <hr>
+    <p>Make a recommendation to...</p>
+    <form method="post">
+      {{form3.hidden_tag() }}
+      {{ form3.userID() }}
+      {{ form3.submitRecommend() }}
+    </form>
+
+
+
 
   </div>
 
