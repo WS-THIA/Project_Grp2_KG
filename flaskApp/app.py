@@ -5,16 +5,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'myKey123'
 
 ###### Function here ######
-def QueryFunction(food_text):
+def QueryFunction(food_text, sortBy):
 
+    print(food_text + ' ' + sortBy)
 
-    #return the dataframe
-    return food_text + ' testing'
+    return food_text + sortBy
 
-def Cuisine_query(cuisine_txt):
+def Cuisine_query(cuisine_txt, sortBy):
 
+    print(cuisine_txt + ' ' + sortBy)
 
-    return cuisine_txt + str(12345)
+    return cuisine_txt + sortBy
 
 def makeRecommendation(userID):
 
@@ -34,16 +35,15 @@ def main():
     if form1.validate_on_submit():
 
         food = form1.textInput.data
-
-        # Call function here
-        data = QueryFunction(food)
+        sortBy = form1.sortBy.data
+        data = QueryFunction(food, sortBy)
         return render_template('reviews.html', data=data)
 
     if form2.validate_on_submit():
 
         cuisine = form2.cuisine.data
-
-        data = Cuisine_query(cuisine)
+        sortBy = form1.sortBy.data
+        data = Cuisine_query(cuisine, sortBy)
 
         return render_template('reviews.html', data=data)
 
