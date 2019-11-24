@@ -15,7 +15,7 @@ class radioInterface(FlaskForm):
 
     cuisine= RadioField('Which cuisine would you like to explore?', choices = [('Asian','Asian'),
                                              ('Japanese','Japanese'),
-                                             ('Westerm','Western'),
+                                             ('Western','Western'),
                                              ('Dessert','Dessert'),
                                              ('Western-Local','Western-Local'),
                                             ('Japanese-Local','Japanese-Local'),

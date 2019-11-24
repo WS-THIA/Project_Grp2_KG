@@ -140,6 +140,7 @@ def QueryFunction(food_text, sortBy):
 
 
 def Cuisine_query(cuisine_txt, sortBy):
+    print(cuisine_txt)
     cuisine_txt = cuisine_txt.lower()
     res = search_restaurant_by_cusine(burpple, cuisine_txt,sortBy)
 
