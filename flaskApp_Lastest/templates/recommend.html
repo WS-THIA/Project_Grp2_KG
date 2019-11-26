@@ -6,8 +6,22 @@
     <title></title>
   </head>
   <body>
+   <div class="container">
+    <table border="1" width="1000px">
+      <tr>
+        <th width="200px">Restaurant</th>
+      </tr>
 
-    <p>{{ data }}</p>
+      {% for restaurant in data %}
+      <tr>
+        <td>
+          {{ restaurant }}
+        </td>
+      </tr>
+      {% endfor %}
+
+    </table>
+</div>
 
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
