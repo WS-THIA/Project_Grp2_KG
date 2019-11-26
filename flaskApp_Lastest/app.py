@@ -35,11 +35,9 @@ def r_recommender(graph, cid, num_nearest_neighbors, num_recommendations):
               COLLECT(re.name)[0..{n}] as recommendations  
            """
 
-
-
     for i in graph.run(query, p_name=cid, k=num_nearest_neighbors, n=num_recommendations):
 
-        recommendations=i[1]
+        recommendations = i[1]
 
     return recommendations
 
@@ -125,68 +123,116 @@ def query_reviews_cuisine(graph, res_list):
     return result
 
 
-def query_reviews_food(graph, res_list, food):
+def query_reviews_food(graph, res_list, food, spli):
     result = []
-    query_top = """
-            MATCH (r:Review)-[a:About]->(re:Restaurant)
-            WHERE re.name = {restaurant}
-            WITH re, r
-            MATCH (r:Review)-[c:Contains]->(f:Food)
-            WHERE f.name = {food}
-            WITH re, r, c
-            ORDER BY c.food_sentiment DESC
-            WITH re, COLLECT(r)[0..3] AS top3
-            UNWIND top3 AS top
-            RETURN re.name, top.review
-            """
 
-    query_bottom = """
-            MATCH (r:Review)-[a:About]->(re:Restaurant)
-            WHERE re.name = {restaurant}
-            WITH re, r
-            MATCH (r:Review)-[c:Contains]->(f:Food)
-            WHERE f.name = {food}
-            WITH re, r, c
-            ORDER BY c.food_sentiment DESC
-            WITH re, COLLECT(r)[-4..-1] AS bottom3
-            UNWIND bottom3 AS bottom
-            RETURN re.name, bottom.review
-            """
-    for item in res_list:
+    if not spli:
+        query_top = """
+                MATCH (r:Review)-[a:About]->(re:Restaurant)
+                WHERE re.name = {restaurant}
+                WITH re, r
+                MATCH (r:Review)-[c:Contains]->(f:Food)
+                WHERE f.name = {food}
+                WITH re, r, c
+                ORDER BY c.food_sentiment DESC
+                WITH re, COLLECT(r)[0..3] AS top3
+                UNWIND top3 AS top
+                RETURN re.name, top.review
+                """
 
-        temp = [item]
-        tmp_t = graph.run(query_top, restaurant=item, food=food).data()
-        for r in tmp_t:
-            if not r['top.review']:
-                temp.append('No reviews')
-            else:
-                temp.append(r['top.review'])
+        query_bottom = """
+                MATCH (r:Review)-[a:About]->(re:Restaurant)
+                WHERE re.name = {restaurant}
+                WITH re, r
+                MATCH (r:Review)-[c:Contains]->(f:Food)
+                WHERE f.name = {food}
+                WITH re, r, c
+                ORDER BY c.food_sentiment DESC
+                WITH re, COLLECT(r)[-4..-1] AS bottom3
+                UNWIND bottom3 AS bottom
+                RETURN re.name, bottom.review
+                """
+        for item in res_list:
 
-        tmp_b = graph.run(query_bottom, restaurant=item, food=food).data()
-        for r in tmp_b:
-            if not r['bottom.review']:
-                temp.append('No reviews')
-            else:
-                temp.append(r['bottom.review'])
+            temp = [item]
+            tmp_t = graph.run(query_top, restaurant=item, food=food).data()
+            for r in tmp_t:
+                if not r['top.review']:
+                    temp.append('No reviews')
+                else:
+                    temp.append(r['top.review'])
 
-        result.append(temp)
+            tmp_b = graph.run(query_bottom, restaurant=item, food=food).data()
+            for r in tmp_b:
+                if not r['bottom.review']:
+                    temp.append('No reviews')
+                else:
+                    temp.append(r['bottom.review'])
 
-    return result
+            result.append(temp)
+
+        return result
+
+    else:
+        food = food.split()
+        food1 = food[0]
+        food2 = food[1]
+        print(food1,food2)
+
+        query_top_2 = """
+                MATCH (r:Review)-[a:About]->(re:Restaurant)
+                WHERE re.name = {restaurant}
+                WITH re, r
+                MATCH (f1:Food)<-[c:Contains]-(r:Review)-[c1:Contains]->(f2:Food)
+                WHERE f1.name = {term1} AND f2.name = {term2}
+                WITH re, r, c
+                ORDER BY c.food_sentiment DESC
+                WITH re, COLLECT(r)[0..3] AS top3
+                UNWIND top3 AS top
+                RETURN re.name, top.review
+                """
+
+        query_bottom_2 = """
+                MATCH (r:Review)-[a:About]->(re:Restaurant)
+                WHERE re.name = {restaurant}
+                WITH re, r
+                MATCH (f1:Food)<-[c:Contains]-(r:Review)-[c1:Contains]->(f2:Food)
+                WHERE f1.name = {term1} AND f2.name = {term2}
+                WITH re, r, c
+                ORDER BY c.food_sentiment DESC
+                WITH re, COLLECT(r)[-4..-1] AS bottom3
+                UNWIND bottom3 AS bottom
+                RETURN re.name, bottom.review
+                """
+
+        for item in res_list:
+
+            temp = [item]
+            tmp_t = graph.run(query_top_2, restaurant=item, term1=food1, term2=food2).data()
+            for r in tmp_t:
+                if not r['top.review']:
+                    temp.append('No reviews')
+                else:
+                    temp.append(r['top.review'])
+
+            tmp_b = graph.run(query_bottom_2, restaurant=item, term1=food1, term2=food2).data()
+            for r in tmp_b:
+                if not r['bottom.review']:
+                    temp.append('No reviews')
+                else:
+                    temp.append(r['bottom.review'])
+
+            result.append(temp)
+
+        return result
 
 
 def search_restaurant_by_food(graph, text, sort):
     result = []
     key_words = text
+    spli = False
 
-    query_rating = """
-        MATCH (r:Review)-[c:Contains]->(f:Food)
-        WHERE f.name = {term}
-        WITH DISTINCT r, c
-        MATCH (r)-[a:About]->(re:Restaurant)
-        RETURN re.name, sum(c.food_sentiment)/count(r) AS average_senti, count(r) AS number
-        ORDER BY average_senti DESC
-        """
-    query_popularity = """
+    query_pop = """
         MATCH (r:Review)-[c:Contains]->(f:Food)
         WHERE f.name = {term}
         WITH DISTINCT r, c
@@ -195,41 +241,72 @@ def search_restaurant_by_food(graph, text, sort):
         ORDER BY number DESC
         """
 
-    if sort == 'number_of_reviews':
-        query = query_popularity
+    query_rate = """
+        MATCH (r:Review)-[c:Contains]->(f:Food)
+        WHERE f.name = {term}
+        WITH DISTINCT r, c
+        MATCH (r)-[a:About]->(re:Restaurant)
+        RETURN re.name, sum(c.food_sentiment)/count(r) AS average_senti, count(r) AS number
+        ORDER BY average_senti DESC
+        """
 
+    query_2_pop = """
+        MATCH (f1:Food)<-[c:Contains]-(r:Review)-[c1:Contains]->(f2:Food)
+        WHERE f1.name = {term1} AND f2.name = {term2}
+        WITH DISTINCT r, c
+        MATCH (r)-[a:About]->(re:Restaurant)
+        RETURN re.name, sum(c.food_sentiment)/count(r) AS average_senti, count(r) AS number
+        ORDER BY number DESC
+        """
+
+    query_2_rate = """
+        MATCH (f1:Food)<-[c:Contains]-(r:Review)-[c1:Contains]->(f2:Food)
+        WHERE f1.name = {term1} AND f2.name = {term2}
+        WITH DISTINCT r, c
+        MATCH (r)-[a:About]->(re:Restaurant)
+        RETURN re.name, sum(c.food_sentiment)/count(r) AS average_senti, count(r) AS number
+        ORDER BY average_senti DESC
+        """
+
+    if sort == 'number_of_reviews':
+        query = query_pop
+        query_2 = query_2_pop
     if sort == 'rating':
-        query = query_rating
+        query = query_rate
+        query_2 = query_2_rate
 
     ans = graph.run(query, term=text).data()
 
     if ans:
         for item in ans:
             result.append(item['re.name'])
-        return result
+        return result, spli
 
     else:
         key_words = key_words.split()
-        result = []
+        food1 = key_words[0]
+        food2 = key_words[1]
+        spli = True
 
-        for i in range(len(key_words)):
-            temp = graph.run(query, term=key_words[i]).data()
-            for item in temp:
-                result.append(item['re.name'])
+        ans = graph.run(query_2, term1=food1, term2=food2).data()
+
+        for item in ans:
+            result.append(item['re.name'])
 
         if not result:
-            return ['No records found']
+            return ['No records found'], spli
         else:
-            return result
+            return result, spli
 
 
 ###### Function here ######
 def QueryFunction(food_text, sortBy):
     food_text = food_text.lower()
-    res = search_restaurant_by_food(burpple, food_text, sortBy)
-    result = query_reviews_food(burpple,res,food_text)
-
+    res, spli = search_restaurant_by_food(burpple, food_text, sortBy)
+    result = query_reviews_food(burpple, res, food_text, spli)
     return result
+
+
 
 
 def Cuisine_query(cuisine_txt, sortBy):
