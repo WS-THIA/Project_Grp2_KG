@@ -234,7 +234,7 @@ def Cuisine_query(cuisine_txt, sortBy):
 
 
 def makeRecommendation(userID):
-
+    print(userID)
     res = r_recommender(burpple, userID, 10, 5)
 
     return res

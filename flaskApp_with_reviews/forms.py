@@ -13,7 +13,7 @@ class textInterface(FlaskForm):
 
 class radioInterface(FlaskForm):
 
-    cuisine= RadioField('Which cuisine would you like to explore?', choices = [('Asian','Asian'),
+    cuisine= RadioField('Which cuisine would you like to explore?', choices = [('Local','Asian'),
                                              ('Japanese','Japanese'),
                                              ('Western','Western'),
                                              ('Dessert','Dessert'),
